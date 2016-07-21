@@ -1,7 +1,7 @@
 # Salesforce Processing with Batch Apex
 
 * Salesforce Batch processing that allows bypassing of Salesforce governor limits (50,000 records received from SOQL query and 10,000 DML operations)
-* Used Visualforce, Apex, Batch Apex
+* Uses Visualforce, Apex, Batch Apex
 * This functionality was added to original processing to allow the client to process more than 10,000 records at once
 
 Demo:
