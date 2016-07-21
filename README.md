@@ -29,8 +29,7 @@ Demo:
 ####Status Messages
 
 <img src="https://raw.github.com/elizabethtian/salesforce-batch-processing/master/img/processing.jpg"/>
-
-<img src="https://raw.github.com/elizabethtian/salesforce-batch-processing/master/img/completed.png"/>
+<img src="https://raw.github.com/elizabethtian/salesforce-batch-processing/master/img/completed.png" height="27px"/>
 
 * The "Check 'Process All' Status" button can be used to check the status of the Apex batches that were sent for processing
 * Each Apex batch is 200 records, processed asynchronously to bypass governor limits 
