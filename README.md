@@ -6,11 +6,16 @@
 
 Demo:
 ---
+
+###Query & Process Selected
+
 <img src="https://raw.github.com/elizabethtian/salesforce-batch-processing/master/img/query.png"/>
 
 * Process cards component allows the organization to filter by card company, card type, month, and year
 * When "Query" button is clicked, all "Income" records matching the filter criteria are displayed, if the number of records is under 1000
 * Records can be selected and processed through the "Process Selected" button
+
+###Process All
 
 <img src="https://raw.github.com/elizabethtian/salesforce-batch-processing/master/img/processall.png"/>
 
