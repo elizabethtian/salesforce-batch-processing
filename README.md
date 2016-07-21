@@ -18,8 +18,8 @@ Visualforce component:
 * Clicking the "Process All" button will process all the records that match the displayed filter criteria, even if there are over 10,000 records
 
 <img src="https://raw.github.com/elizabethtian/salesforce-batch-processing/master/check.png"/>
-<img src="https://raw.github.com/elizabethtian/salesforce-batch-processing/master/query.png"/>
-<img src="https://raw.github.com/elizabethtian/salesforce-batch-processing/master/query.png"/>
+<img src="https://raw.github.com/elizabethtian/salesforce-batch-processing/master/processing.png"/>
+<img src="https://raw.github.com/elizabethtian/salesforce-batch-processing/master/completed.png"/>
 
 * The "Check 'Process All' Status" button can be used to check the status of the Apex batches that were sent for processing
 * Each Apex batch is 200 records, processed asynchronously to bypass governor limits 
