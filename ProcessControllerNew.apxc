@@ -1,0 +1,167 @@
+/* 
+ * New process card Apex controller that implements Batch Apex
+ * to bypass governor limits of 50,000 records received from
+ * SOQL query and 10,000 DML operations.
+ * Based off of the original processController2.
+ * 
+ * Created by: Elizabeth Tian, July 2016
+*/
+public class ProcessControllerNew {
+    
+    public Boolean selectAllCheckbox {get; set;} 
+    public String cardCompany {get; set;}
+    public String cardType {get; set;}
+    public Integer month {get; set;}             
+    public List <Income__c> queryResult{get; set;}          
+    public List<cIncome> selIncome {get; set;}
+    public Boolean sel = false;
+    public Integer year {get; set;}
+    public String q {get; set;}
+    public Id batchId {get;set;}
+    
+    // wrapper class for processing selected records
+    public class cIncome{
+        public Income__c inc {get; set;}
+        public Boolean selected {get; set;}
+       
+        public cIncome(Income__c c){
+         this.inc = c;
+         selected = false;
+        }
+    }
+	
+    // constructor
+    public processControllerNew(){
+        queryResult = new List<Income__c>();
+        selIncome = new List<cIncome>();  
+    }
+    
+    // method to query the ingresos based on the filter values and display them
+    public PageReference query() {
+     
+      Integer numberDays = date.daysInMonth(year, month);     
+      date myDateMin = date.newInstance(year, month, 1);
+      date myDateMax = date.newInstance(year, month, numberDays);
+      String formattedMin = String.valueOf(myDateMin);
+      String formattedMax = String.valueOf(myDateMax);
+      Integer numRecords = 0; 
+      selectAllCheckbox = false; 
+      selIncome.clear();
+      queryResult.clear();
+      q = 'SELECT Name, Name_Contact__c, Future_Donation_Date__c, Amount__c, No_Process__c,' +
+                        'Commitment__r.name, Contact__r.DNI__c, Account__c ' +
+          'FROM Income__c WHERE (Contact__r.Card_Name_1__c =\'' + cardCompany +
+                         '\' AND Contact__r.Card_Type_1__c=\'' + cardType +
+                         '\' AND No_Process__c = false' +
+                         ' AND Status__c = \'Pendiente\'' +
+                         ' AND Future_Donation_Date__c >=' + formattedMin +
+                         ' AND Future_Donation_Date__c <=' + formattedMax +
+                         ' AND Commitment__r.Credit_Card_To_Use__c = \'Tarjeta 1\')' + 
+                       ' OR (Contact__r.Card_Name_2__c=\'' + cardCompany + 
+                         '\' AND Contact__r.Card_Type_2__c=\'' + cardType +
+                         '\' AND No_Process__c = false' +
+                         ' AND Status__c = \'Pendiente\'' +
+                         ' AND Future_Donation_Date__c >=' + formattedMin +
+                         ' AND Future_Donation_Date__c <=' + formattedMax +
+                         ' AND Commitment__r.Credit_Card_To_Use__c = \'Tarjeta 2\')';
+      queryResult = new List<Income__c>();
+      queryResult = [SELECT Name, Name_Contact__c, Future_Donation_Date__c, Amount__c, No_Process__c,
+                            Commitment__r.name, Contact__r.DNI__c, Account__c
+                     FROM   Income__c
+                     WHERE  (Contact__r.Card_Name_1__c=:cardCompany 
+                         AND Contact__r.Card_Type_1__c=:cardType 
+                         AND No_Process__c = false
+                         AND Status__c = 'Pendiente' 
+                         AND Future_Donation_Date__c >=:myDateMin
+                         AND Future_Donation_Date__c <=:myDateMax
+                         AND Commitment__r.Credit_Card_To_Use__c = 'Tarjeta 1')
+                       OR 
+                            (Contact__r.Card_Name_2__c=:cardCompany 
+                         AND Contact__r.Card_Type_2__c=:cardType
+                         AND No_Process__c = false
+                         AND Status__c = 'Pendiente'
+                         AND Future_Donation_Date__c >=:myDateMin
+                         AND Future_Donation_Date__c <=:myDateMax
+                         AND Commitment__r.Credit_Card_To_Use__c = 'Tarjeta 2')
+                    ];
+      selIncome = new List<cIncome>();
+ 	  
+      // if the query result is less than 1000, can add to collection
+      if (queryResult.size() < 1000){
+         for(Income__c com : queryResult){
+         	selIncome.add(new cIncome(com));
+         }
+      numRecords = selIncome.size();
+      ApexPages.Message msg = new ApexPages.Message(ApexPages.Severity.CONFIRM, 'Number of records ('+ numRecords +')');
+      ApexPages.addMessage(msg); 
+       
+      }
+      // if query result is greater than 1000
+      else {
+         ApexPages.Message msg = new ApexPages.Message
+             (ApexPages.Severity.CONFIRM, 
+              'The number of records ('+ queryResult.size() +') exceeds 1000, please process all of them at once using "Process All".');
+         ApexPages.addMessage(msg);                
+      }
+      return null;
+    }
+
+    // method to process the selected records
+    public PageReference procesar() {
+        if (selIncome != null) {
+        
+        List<Income__c> coms = new List<Income__c> ();
+        Integer numRecords = 0;
+        Integer W = 350;
+        for(cIncome com : selIncome){
+             if (com.selected == true){ 
+                 com.inc.No_Process__c = true;
+                 coms.add(com.inc);
+                 if (coms.size() > 349) {
+                  	update coms;
+                    coms.clear();
+                  	numRecords += W;
+                 }
+              }
+        }
+        update coms;
+        query();
+        numRecords += coms.size();
+        ApexPages.Message msg = new ApexPages.Message(ApexPages.Severity.CONFIRM, numRecords + ' records are sent for processing.');
+        ApexPages.addMessage(msg);
+       }
+       return null;
+    }
+    
+    // method to process all the records
+    // uses the batch apex class
+    public PageReference procesarAll() {
+        ProcessAll batch = new ProcessAll(q);
+		    batchId = Database.executeBatch(batch);
+        ApexPages.Message msg = new ApexPages.Message(ApexPages.Severity.CONFIRM, 'All records sent for processing.');
+        ApexPages.addMessage(msg);
+        return null;
+    }
+    
+    public PageReference checkStatus() {
+        List<AsyncApexJob> job = [SELECT Id, Status, JobItemsProcessed, TotalJobItems, NumberOfErrors FROM AsyncApexJob WHERE ID = :batchId];
+        if (job.size() > 0) {
+            if (job[0].Status == 'Completed') {
+                Integer bat = job[0].JobItemsProcessed;
+                Integer tot = job[0].TotalJobItems;
+                ApexPages.Message msg = new ApexPages.Message(ApexPages.Severity.CONFIRM, 'Finished processing. ' + bat + ' batch(es) have been processed out of ' + tot + ' batch(es) sent for processing. Note: Each batch has a max of 200 records.');
+        		ApexPages.addMessage(msg);
+            }
+            else if (job[0].Status == 'Processing') {
+                Integer bat = job[0].JobItemsProcessed;
+                Integer tot = job[0].TotalJobItems;
+                ApexPages.Message msg = new ApexPages.Message(ApexPages.Severity.CONFIRM, 'Processing currently in progress. ' + bat + ' batch(es) have been processed out of ' + tot + ' batch(es) sent for processing. Note: Each batch has a max of 200 records.');
+        		ApexPages.addMessage(msg);
+            }
+        } else {
+            ApexPages.Message msg = new ApexPages.Message(ApexPages.Severity.CONFIRM, 'Error: Could not find job.');
+        	ApexPages.addMessage(msg);
+        }
+        return null;
+    }
+}

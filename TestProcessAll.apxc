@@ -1,0 +1,47 @@
+/* 
+ * Test the batch apex class ProcessAll.
+ * 
+ * Created by: Elizabeth Tian, July 2016
+*/
+
+@isTest
+private class TestProcessAll {
+
+    static testmethod void test() {
+        // The query used by the batch job.        
+        String query = 'SELECT Name, Name_Contact__c, Future_Donation_Date__c, Amount__c, No_Process__c,' +
+                                'Commitment__r.name, Contact__r.DNI__c, Account__c ' +
+                  'FROM Income__c WHERE (Contact__r.Card_Name_1__c =\'VISA\'' +
+            					 ' AND Contact__r.Card_Type_1__c=\'CREDIT' +
+                                 '\' AND No_Process__c = false' +
+                                 ' AND Status__c = \'Pendiente\'' +
+                                 ' AND Future_Donation_Date__c >=2016-08-01' +
+                                 ' AND Future_Donation_Date__c <=2016-08-20' +
+                                 ' AND Commitment__r.Credit_Card_To_Use__c = \'Tarjeta 1\')' + 
+                               ' OR (Contact__r.Card_Name_2__c=\'' + 'VISA' + 
+                                 '\' AND Contact__r.Card_Type_2__c=\'' + 'CREDIT' +
+                                 '\' AND No_Process__c = false' +
+                                 ' AND Status__c = \'Pendiente\'' +
+                                 ' AND Future_Donation_Date__c >=' + '2016-08-01' +
+                                 ' AND Future_Donation_Date__c <=' + '2016-08-20' +
+                                 ' AND Commitment__r.Credit_Card_To_Use__c = \'Tarjeta 2\')';
+	
+       // insert income record
+       Income__c income = new Income__c(Contact__c='00322000004Y9aT',
+                                         Status__c='Pendiente',
+                                         Future_donation_date__c=Date.newInstance(2016,08,10),
+                                         Amount__c = 100,
+                                         Commitment__c = 'a0S220000008gjs');
+		   insert income;
+
+       Test.startTest();
+       processAll c = new processAll(query);
+       Database.executeBatch(c);
+       Test.stopTest();
+
+       // assert field was set to true
+       Income__c i = [SELECT Id,No_Process__c FROM Income__c];
+       System.assertEquals(true, i.No_Process__c);
+    }
+
+}

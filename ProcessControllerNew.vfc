@@ -1,0 +1,99 @@
+<!-- 
+ * New process card Visualforce component that works
+ * with the Apex controller to implement Batch Apex.
+ * This allows the page to bypass governor limits of
+ * 50,000 records received from SOQL query and
+ * 10,000 DML operations. Based off of the original
+ * processController2.
+ * 
+ * Created by: Elizabeth Tian, 2016
+-->
+<apex:component controller="ProcessControllerNew" allowDML="true"> 
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"/>
+<script>
+function checkAll(cb){
+    var inputElem = document.getElementsByTagName("input");
+    for(var i=0; i<inputElem.length; i++){
+        if(inputElem[i].id.indexOf("selectLine")!=-1){
+            inputElem[i].checked = cb.checked;
+        }
+    }
+}
+</script>
+<apex:form >
+  
+<apex:pageBlock title="Process Cards">       
+<apex:message />
+    <apex:outputText value="Select the type of process: ">
+        </apex:outputText>
+        <apex:selectList value="{!cardCompany}" size="1" >
+        <apex:selectOption itemValue="AMERICAN EXPRESS" itemLabel="AMERICAN EXPRESS" />
+        <apex:selectOption itemValue="CABAL" itemLabel="CABAL" />
+        <apex:selectOption itemValue="DINERS" itemLabel="DINERS" />
+        <apex:selectOption itemValue="ITALCRED" itemLabel="ITALCRED" />
+        <apex:selectOption itemValue="MASTERCARD" itemLabel="MASTERCARD" />
+        <apex:selectOption itemValue="NEVADA" itemLabel="NEVADA" />
+        <apex:selectOption itemValue="VISA" itemLabel="VISA" />
+        </apex:selectList>
+        <apex:selectList value="{!cardType}" size="1" >
+        <apex:selectOption itemValue="CREDIT" itemLabel="CREDIT" />
+        <apex:selectOption itemValue="DEBIT" itemLabel="DEBIT" />
+        </apex:selectList>
+        <apex:selectList value="{!month}" size="1" >
+        <apex:selectOption itemValue="1" itemLabel="Enero"/>
+        <apex:selectOption itemValue="2" itemLabel="Febrero"/>
+        <apex:selectOption itemValue="3" itemLabel="Marzo"/>
+        <apex:selectOption itemValue="4" itemLabel="Abril"/>
+        <apex:selectOption itemValue="5" itemLabel="Mayo"/>
+        <apex:selectOption itemValue="6" itemLabel="Junio"/>
+        <apex:selectOption itemValue="7" itemLabel="Julio"/>
+        <apex:selectOption itemValue="8" itemLabel="Agosto"/>
+        <apex:selectOption itemValue="9" itemLabel="Septiembre"/>
+        <apex:selectOption itemValue="10" itemLabel="Octubre"/>
+        <apex:selectOption itemValue="11" itemLabel="Noviembre"/>
+        <apex:selectOption itemValue="12" itemLabel="Diciembre"/>
+        </apex:selectList>
+        <apex:selectList value="{!year}" size="1" >
+        <apex:selectOption itemValue="{!year(today())}"/>
+        <apex:selectOption itemValue="{!year(today())-1}"/>
+        <apex:selectOption itemValue="{!year(today())+1}"/>
+        <apex:selectOption itemValue="{!year(today())+2}"/>
+        <apex:selectOption itemValue="{!year(today())+3}"/>
+        </apex:selectList>  
+        <apex:commandButton value="Query" action="{!query}" >
+        </apex:commandButton>
+        <apex:commandButton value="Process Selected" action="{!procesar}"> 
+        </apex:commandButton>
+        <apex:commandButton value="Process All" action="{!procesarAll}"> 
+        </apex:commandButton>
+        <apex:commandButton value="Check 'Process All' Status" action="{!checkStatus}"> 
+        </apex:commandButton>
+        <apex:messages />
+        <!--<apex:commandButton value="Refresh" onclick="now()"></apex:commandButton> -->    
+  
+     <apex:pageblockTable id="myTable" value="{!selIncome}" var="c">
+      <apex:column >
+       <apex:facet name="header">
+         <apex:inputCheckbox value="{!selectAllCheckbox}" onclick="checkAll(this)"> 
+         </apex:inputCheckbox>
+      </apex:facet>
+      <apex:inputCheckbox value="{!c.selected}" Id="selectLine"/>
+      </apex:column>
+      <apex:column headerValue="Commitment Number" > 
+      <a href = "/{!c.inc.Commitment__r.Id}" >
+      <apex:outputField value="{!c.inc.Commitment__r.Name}" /></a>
+      </apex:column>
+      <!--<apex:column value="{!c.inc.Commitment__r.Name}"/>-->  
+      <apex:column headerValue="Contact" value="{!c.inc.Contact__c}"/>
+      <apex:column headerValue="Account" value="{!c.inc.Account__c}"/>
+      <apex:column headerValue="Income Number" > 
+      <a href = "/{!c.inc.Id}" >
+      <apex:outputField value="{!c.inc.Name}" /></a>
+      </apex:column>      
+      <!--<apex:column headerValue="Income Number" value="{!c.inc.Name}"/>-->
+      <apex:column headerValue="Fecha de Presentación" value="{!c.inc.Future_donation_date__c}"/>
+      <apex:column headerValue="Monto" value="{!c.inc.Amount__c}"/>
+     </apex:pageblockTable>
+   </apex:pageblock>
+ </apex:form>
+</apex:component>

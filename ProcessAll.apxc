@@ -1,0 +1,34 @@
+/* 
+ * Batch apex class to process all the queried ingresos.
+ * 
+ * Created by: Elizabeth Tian, July 2016
+*/
+
+global class ProcessAll implements Database.Batchable<sObject> {
+    
+    global final String query;
+    global processAll(String q) {
+       query = q;
+    }
+
+    global Database.QueryLocator start(Database.BatchableContext BC){
+       return Database.getQueryLocator(query);
+    }
+ 
+    global void execute(Database.BatchableContext bc, List<Income__c> records){
+        for (Income__c income : records) {
+            income.No_Process__c = true;
+        }
+        update records;
+    }    
+
+    global void finish(Database.BatchableContext bc){
+		AsyncApexJob a = [SELECT Id, Status, NumberOfErrors, JobItemsProcessed,
+      		TotalJobItems, CreatedBy.Email
+      		FROM AsyncApexJob WHERE Id =
+      		:BC.getJobId()];
+        System.debug(a);
+        System.debug(a.JobItemsProcessed + ' batches processed.');
+    }    
+
+}
